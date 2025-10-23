@@ -165,25 +165,45 @@ export default function TeacherPackagePage() {
                   )}
 
                   {/* Purchase button */}
-                  <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
-                    <button
-                      style={{
-                        backgroundColor: "#007bff",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "10px 20px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "background-color .2s",
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#0056b3")}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#007bff")}
-                      onClick={() => router.push("/register")} // navigate to register page
-                    >
-                      Purchase
-                    </button>
-                  </div>
+<div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+  <button
+    style={{
+      backgroundColor: "#007bff",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "10px 20px",
+      fontWeight: 600,
+      cursor: "pointer",
+      transition: "background-color .2s",
+    }}
+    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#0056b3")}
+    onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#007bff")}
+    onClick={() => {
+      // Prepare package data to store
+      const packageData = {
+        id: pkg.id,
+        name: pkg.name,
+        tagline: pkg.tagline,
+        description: pkg.description,
+        imageName: pkg.imageName,
+        points: pkgPoints,
+        rate: pkgRate,
+        finalPrice,
+        priceLabel,
+      };
+      
+      // Store in localStorage for later pages
+      localStorage.setItem("selectedPackage", JSON.stringify(packageData));
+      
+      // Navigate to Register page
+      router.push("/register");
+    }}
+  >
+    Purchase
+  </button>
+</div>
+
                 </div>
               </div>
             </div>
