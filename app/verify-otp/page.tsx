@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL_TUNNEL ||
+  process.env.NEXT_PUBLIC_API_URL_LOCAL ||
+  "http://localhost:5000";
+;
 
 export default function VerifyOtpForm() {
   const [name, setName] = useState("");

@@ -22,7 +22,19 @@ type PackagePricingSettingItem = {
   toDate?: string | null;
 };
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL_TUNNEL ||
+  process.env.NEXT_PUBLIC_API_URL_LOCAL ||
+  "http://localhost:5000";
+;
+
 export default function TeacherPackagePage() {
+    console.log(
+    "API_URLs:",
+    "TUNNEL:", process.env.NEXT_PUBLIC_API_URL_TUNNEL,
+    "LOCAL:", process.env.NEXT_PUBLIC_API_URL_LOCAL,
+    "CHOOSEN:", API_URL
+  );
   const [packages, setPackages] = useState<TeacherPackage[]>([]);
   const [pointsMap, setPointsMap] = useState<Map<number, string[]>>(new Map());
   const [rateMap, setRateMap] = useState<Map<number, number>>(new Map());
@@ -33,14 +45,16 @@ export default function TeacherPackagePage() {
   const router = useRouter(); // initialize router
 
   useEffect(() => {
+    let mounted = true;
+
     async function fetchAll() {
       setLoading(true);
       try {
         const [pkgRes, ptsRes, priceRes, priceSettingRes] = await Promise.all([
-          fetch("http://localhost:5000/teacher-packages/"),
-          fetch("http://localhost:5000/package-points"),
-          fetch("http://localhost:5000/package-pricing"),
-          fetch("http://localhost:5000/package-pricing-settings"),
+          fetch(`${API_URL}/teacher-packages/`),
+          fetch(`${API_URL}/package-points`),
+          fetch(`${API_URL}/package-pricing`),
+          fetch(`${API_URL}/package-pricing-settings`),
         ]);
 
         if (!pkgRes.ok) throw new Error(`Packages fetch failed: ${pkgRes.status}`);
@@ -52,6 +66,8 @@ export default function TeacherPackagePage() {
         const ptsData: PackagePointItem[] = await ptsRes.json();
         const priceData: PackagePricingItem[] = await priceRes.json();
         const priceSettingData: PackagePricingSettingItem[] = await priceSettingRes.json();
+
+        if (!mounted) return;
 
         setPackages(pkgData);
 
@@ -80,13 +96,17 @@ export default function TeacherPackagePage() {
         setPricingMap(pricingMapTemp);
 
       } catch (err) {
-        console.error(err);
+        console.error("Failed to load package data:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
     fetchAll();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) return <p style={{ padding: 20 }}>Loading all packages...</p>;
@@ -130,7 +150,11 @@ export default function TeacherPackagePage() {
               }}
             >
               {pkg.imageName ? (
-                <img src={`http://localhost:5000/uploads/${pkg.imageName}`} alt={pkg.name} style={{ width: "100%", height: 180, objectFit: "cover" }} />
+                <img
+                  src={`${API_URL}/uploads/${pkg.imageName}`}
+                  alt={pkg.name}
+                  style={{ width: "100%", height: 180, objectFit: "cover" }}
+                />
               ) : (
                 <div style={{ width: "100%", height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f5f5", color: "#999" }}>No image</div>
               )}
@@ -165,45 +189,47 @@ export default function TeacherPackagePage() {
                   )}
 
                   {/* Purchase button */}
-<div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
-  <button
-    style={{
-      backgroundColor: "#007bff",
-      color: "#fff",
-      border: "none",
-      borderRadius: 8,
-      padding: "10px 20px",
-      fontWeight: 600,
-      cursor: "pointer",
-      transition: "background-color .2s",
-    }}
-    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#0056b3")}
-    onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#007bff")}
-    onClick={() => {
-      // Prepare package data to store
-      const packageData = {
-        id: pkg.id,
-        name: pkg.name,
-        tagline: pkg.tagline,
-        description: pkg.description,
-        imageName: pkg.imageName,
-        points: pkgPoints,
-        rate: pkgRate,
-        finalPrice,
-        priceLabel,
-      };
-      
-      // Store in localStorage for later pages
-      localStorage.setItem("selectedPackage", JSON.stringify(packageData));
-      
-      // Navigate to Register page
-      router.push("/register");
-    }}
-  >
-    Purchase
-  </button>
-</div>
+                  <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+                    <button
+                      style={{
+                        backgroundColor: "#007bff",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 20px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "background-color .2s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#0056b3")}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#007bff")}
+                      onClick={() => {
+                        // Prepare package data to store
+                        const packageData = {
+                          id: pkg.id,
+                          name: pkg.name,
+                          tagline: pkg.tagline,
+                          description: pkg.description,
+                          imageName: pkg.imageName,
+                          points: pkgPoints,
+                          rate: pkgRate,
+                          finalPrice,
+                          priceLabel,
+                        };
 
+                        try {
+                          localStorage.setItem("selectedPackage", JSON.stringify(packageData));
+                        } catch (err) {
+                          console.error("Failed to save package to localStorage:", err);
+                        }
+
+                        // Navigate to Register page
+                        router.push("/register");
+                      }}
+                    >
+                      Purchase
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
